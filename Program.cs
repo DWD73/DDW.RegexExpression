@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace ConsoleApp7
 {
@@ -10,106 +12,101 @@ namespace ConsoleApp7
         static void Main(string[] args)
         {
 
-            GetRegex();
+            Console.WriteLine("Программа для поиска картинок на странице ресурса\nУкажите адрес странички.");
 
-            GetHtmlPage("https://sm.news/the-national-interest-takticheskoe-yadernoe-oruzhie-vs-rf-pugaet-nato-60798/");
+            string pathPage = Console.ReadLine();
 
-            //Encoding unicode = Encoding.Unicode;
-            //Encoding utf16 = Encoding.BigEndianUnicode;
-            //Encoding utf8 = Encoding.UTF8;
+            if (pathPage?.Length == 0)
+            {
+                pathPage = "http://www.contoso.com/default.html";
+            }
 
-            //string myText = "apple!";
-
-            //byte[] unicodeByte = unicode.GetBytes(myText);
-            //byte[] utf16Byte = Encoding.Convert(unicode, utf16, unicodeByte);
-            //byte[] utf8Byte = Encoding.Convert(unicode, utf8, unicodeByte);
-            //NewMethod(unicodeByte);
-            //NewMethod(utf16Byte);
-            //NewMethod(utf8Byte);
-
-            //PrintLine();
-
-            //Console.ReadLine();
-
-            //var swUtf8 = new StreamWriter("text.txt", true, Encoding.UTF8);
-            //swUtf8.WriteLine("Hello word!");
-            //swUtf8.Close();
-
-            //var swUtf32 = new StreamWriter("text.txt", true, Encoding.UTF32);
-            //swUtf32.WriteLine("Hello word!");
-            //swUtf32.Close();
-
-            Console.ReadLine();
-        }
-
-        private static void NewMethod(byte[] unicodeByte)
-        {
-            foreach (byte b in unicodeByte)
-                Console.Write($"{b}:");
-            PrintLine();
-        }
-
-        private static void PrintLine()
-        {
-            Console.WriteLine(Environment.NewLine);
-        }
+            var pageContent = GetPageContent(pathPage);
 
 
-
-        private static void GetRegex()
-        {
-            const string pattern = @"^\d*\D+\d+$";
-            var regex = new Regex(pattern);
-
-            string input = "";
+            Console.WriteLine("Поиск картинок... Ждите.");
 
             while (true)
             {
-                //string input = Console.ReadKey().KeyChar.ToString();
-                input = Console.ReadLine();
-
-                if (input == " ")
+                if (pageContent.IsCompleted)
+                {
                     break;
-
-
-                Console.WriteLine($"{(regex.IsMatch(input) ? "\tСоответствуе шаблону" : "\tНе соответствует шаблону")}");
-
+                }
             }
 
 
+            GetImage(pageContent.Result);
+
+            //Console.WriteLine($"Контент загружен.\nНачать поиск картинок? {Command.Y} / {Command.N}");
+
+            //var input = Console.ReadKey().KeyChar;
+
+            //if (Convert.ToChar(Command.Y).Equals(Convert.ToChar(input)))
+            //{
+            //    GetImage(pageContent.Result);
+            //}
+            //else
+            //{
+            //    Environment.Exit(0);
+            //}
+
+            //Console.WriteLine(pageContent.Result);
+
+            Console.ReadLine();
 
 
+
+
+            //Console.ReadLine();
         }
 
-        private static void GetHtmlPage(string pagelink)
+        static async Task<string> GetPageContent(string requestUri)
         {
 
-
-            if (pagelink == "" || pagelink == " ")
+            WebRequest request = WebRequest.Create(requestUri);
+            request.Credentials = CredentialCache.DefaultCredentials;
+            using HttpWebResponse webResponse = (HttpWebResponse)await request.GetResponseAsync();
+            using Stream stream = webResponse.GetResponseStream();
+            using (StreamReader streamReader = new StreamReader(stream))
             {
-
+                return await streamReader.ReadToEndAsync();
             }
-            else
-            {
-                //Отправляем запрос,где textBox1 - строка с адресом
-
-                System.Net.WebRequest reqGET = System.Net.WebRequest.Create(pagelink);
-                System.Net.WebResponse resp = reqGET.GetResponse();
-                System.IO.Stream stream = resp.GetResponseStream();
-                //Получаем ответ в переменную sr и считываем его до конца
-                System.IO.StreamReader sr = new System.IO.StreamReader(stream, Encoding.Default);
-                string s = sr.ReadToEnd();
-
-                //Выводим всю лабуду в richTextBox1
-                var myFile = new StreamWriter("text.txt");
-                myFile.WriteLine(s);
-                myFile.Close();
-            }
-
 
         }
 
 
+        private static void GetImage(string pageContent)
+        {
+            string pattern = @"((\<img\s+src=""(?<Full>http(s?).+?)"")|(\<img\s+src=""(?<Short>.+?)""))";
+
+                ///<img[^>]+src="([^">]+)"/gm
+            //const string pattern = @"\d+";
+
+            var regex = new Regex(pattern);
+
+            MatchCollection matches = Regex.Matches(pageContent, pattern);
+
+
+
+            foreach (Match match in matches)
+            {
+
+
+                Console.WriteLine(match.Value);
+
+
+            }
+
+
+
+
+        }
+    }
+
+    public enum Command
+    {
+        Y,
+        N
     }
 
 
