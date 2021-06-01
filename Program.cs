@@ -115,7 +115,9 @@ namespace ConsoleApp7
         private static void GetImageFromUrl(string url)
         {                    
            
-            List<Image> images = new List<Image>();                 
+            List<Image> images = new List<Image>();
+
+            url = "http://sivtrans.ru/img/ban-new.jpg";
 
             try
             {
@@ -133,26 +135,44 @@ namespace ConsoleApp7
                     Console.WriteLine(e.Message);
                 }
 
-            }           
+            }
+
+            SaveImageToFile(images);
             
         }
 
         private static void SaveImageToFile(List<Image> images)
         {
             int i = 0;
-            string pathFolder = @"C:\Users\User\Desktop\GFile\";
+            
+            string pathFolder = CreateFolder($"{Directory.GetCurrentDirectory()}");
+
+            //images[0].Save($"{pathFolder}+\\+img+{i++}");
+
             try
             {
-                foreach(Image image in images)
-                if (image != null)
-                {                   
-                    image.Save($"{pathFolder} + img + {i++}");                   
-                }
+                foreach (Image image in images)
+                    if (image != null)
+                    {
+                        image.Save($"{pathFolder}+\\+img+{i++}");
+                    }
             }
             catch (Exception ex)
             {
-                
+
             }
+        }
+
+        private static string CreateFolder(string pathFolder)
+        {         
+            DirectoryInfo dirInfo = new DirectoryInfo(pathFolder);
+            if (!dirInfo.Exists)
+            {
+                dirInfo.Create();
+            }
+            dirInfo.CreateSubdirectory("GFile");
+
+            return dirInfo.FullName;
         }
     }
 }
