@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Net;
-
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -16,16 +14,10 @@ namespace ConsoleApp7
 
         static void Main(string[] args)
         {
+            Console.WriteLine("Программа для поиска картинок на странице ресурса");
 
-            Console.WriteLine("Программа для поиска картинок на странице ресурса\nУкажите адрес странички.");
-            pathPageUrl = Console.ReadLine();
-
-            if (pathPageUrl?.Length == 0)
-            {
-                //pathPage = "http://www.contoso.com/default.html";
-                pathPageUrl = "http://sivtrans.ru";
-            }
-
+            pathPageUrl = "http://sivtrans.ru/";
+                     
             var pageContent = GetPageContent(pathPageUrl);
 
             Console.WriteLine("Загрузка контента... Пожалуйста подождите.");
@@ -49,9 +41,7 @@ namespace ConsoleApp7
             else
             {
                 Environment.Exit(0);
-            }
-
-            
+            }           
 
             Console.ReadLine();
 
@@ -67,9 +57,8 @@ namespace ConsoleApp7
             {
                 return await streamReader.ReadToEndAsync();
             }
-
         }
-
+     
         private static void GetImagePath(string pageContent)
         {
             List<string> pathCollectionImage = new List<string>();
@@ -92,7 +81,6 @@ namespace ConsoleApp7
                 Console.WriteLine($"\t{pathNew}");
             }
 
-
             GetImageFromUrl(pathCollectionImage);
 
         }
@@ -102,39 +90,32 @@ namespace ConsoleApp7
             int start = path.IndexOf('"');
             int finish = path.LastIndexOf('"');
             return (path.Substring(++start, finish - start));
-        }
-
-        private static void GetImageFromUrl(List<string> listPath)
-        {
-            foreach(var path in listPath)
-            {
-                GetImageFromUrl(path);
-            }
-        }
+        }       
      
-        private static void GetImageFromUrl(string url)
+        private static void GetImageFromUrl(List<string> listPath)
         {                    
            
             List<Image> images = new List<Image>();
 
-            url = "http://sivtrans.ru/img/ban-new.jpg";
-
-            try
+            foreach (var path in listPath)
             {
-                using (var stream = new WebClient().OpenRead(url))
+                try
                 {
-                    
-                    images.Add(Bitmap.FromStream(stream));
+                    using (var stream = new WebClient().OpenRead(path))
+                    {
+
+                        images.Add(Bitmap.FromStream(stream));
+                        
+                    }
+                }
+                catch (WebException e)
+                {
+                    if (((HttpWebResponse)e.Response).StatusCode == HttpStatusCode.NotFound)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
 
                 }
-            }
-            catch(WebException e)
-            {
-                if (((HttpWebResponse)e.Response).StatusCode == HttpStatusCode.NotFound)
-                {
-                    Console.WriteLine(e.Message);
-                }
-
             }
 
             SaveImageToFile(images);
@@ -142,36 +123,28 @@ namespace ConsoleApp7
         }
 
         private static void SaveImageToFile(List<Image> images)
-        {
-            int i = 0;
-            
+        {                    
             string pathFolder = CreateFolder($"{Directory.GetCurrentDirectory()}");
 
-            //images[0].Save($"{pathFolder}+\\+img+{i++}");
+            pathFolder = pathFolder + @"\\";
 
-            try
-            {
-                foreach (Image image in images)
-                    if (image != null)
-                    {
-                        image.Save($"{pathFolder}+\\+img+{i++}");
-                    }
+            for(int j = 0; j < images.Count; j++)
+            {              
+                images[j].Save(pathFolder + j + ".jpg");              
             }
-            catch (Exception ex)
-            {
 
-            }
         }
 
         private static string CreateFolder(string pathFolder)
-        {         
+        {
+            pathFolder = pathFolder + @"\\" + "FileFromInet";
+
             DirectoryInfo dirInfo = new DirectoryInfo(pathFolder);
             if (!dirInfo.Exists)
             {
                 dirInfo.Create();
             }
-            dirInfo.CreateSubdirectory("GFile");
-
+            
             return dirInfo.FullName;
         }
     }
