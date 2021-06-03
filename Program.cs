@@ -93,15 +93,17 @@ namespace ConsoleApp7
         }       
      
         private static void GetImageFromUrl(List<string> listPath)
-        {                    
-           
+        {
+            WebClient webClient = new WebClient();
+            
             List<Image> images = new List<Image>();
 
             foreach (var path in listPath)
             {
                 try
                 {
-                    using (var stream = new WebClient().OpenRead(path))
+                    
+                    using (var stream = webClient.OpenRead(path))
                     {
 
                         images.Add(Bitmap.FromStream(stream));
@@ -109,13 +111,10 @@ namespace ConsoleApp7
                     }
                 }
                 catch (WebException e)
-                {
-                    if (((HttpWebResponse)e.Response).StatusCode == HttpStatusCode.NotFound)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
-
+                {                  
+                    Console.WriteLine("Код ошибки : {0} : \n{1}", e.Status, e.Message);                  
                 }
+               
             }
 
             SaveImageToFile(images);
